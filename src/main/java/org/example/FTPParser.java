@@ -1,5 +1,7 @@
 package org.example;
 
+import com.google.gson.annotations.Expose;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -42,11 +44,13 @@ public class FTPParser {
 
     public static class FileInfo {
         private final TYPE type;
+        @Expose
         private String name;
         public Permissions ownerPermissions;
         public Permissions groupPermissions;
         public Permissions otherPermissions;
         //attribut pour le json
+        @Expose
         private List<FileInfo> children;
 
         public  FileInfo(String line) {
@@ -108,6 +112,32 @@ public class FTPParser {
                 this.children.add(child);
             }
         }
+
+        @Override
+        public String toString() {
+            return toString(0);
+        }
+
+        private String toString(int level) {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("  ".repeat(level))
+                    .append("- ")
+                    .append(name)
+                    .append(" (")
+                    .append(type)
+                    .append(")")
+                    .append("\n");
+
+            if (children != null) {
+                for (FileInfo child : children) {
+                    sb.append(child.toString(level + 1));
+                }
+            }
+
+            return sb.toString();
+        }
+
     }
 
 
@@ -146,5 +176,7 @@ public class FTPParser {
 
         return null; // Ou lever une exception si le format est mauvais
     }
+
+
 
 }

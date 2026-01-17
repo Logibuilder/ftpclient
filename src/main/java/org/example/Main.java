@@ -15,7 +15,9 @@ public class Main {
 
         //client.cd("MPlayer");
         client.ls_l();
-        client.tree();
+        //client.tree();
+        //System.out.println(client.treeJSON());
+        client.treeJSON();
         client.disconnect();
     }
 }

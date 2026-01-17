@@ -1,10 +1,14 @@
     package org.example;
 
+    import com.google.gson.Gson;
+    import com.google.gson.GsonBuilder;
+
     import java.io.BufferedReader;
+    import java.io.FileWriter;
     import java.io.IOException;
     import java.io.InputStreamReader;
     import java.net.Socket;
-    import java.util.ArrayList;
+    import java.nio.file.Path;
     import java.util.List;
 
 
@@ -189,34 +193,51 @@
             }
         }
 
-
-
         public FTPParser.FileInfo  treeJSON() throws IOException {
-            FTPParser.FileInfo parent = new FTPParser.FileInfo("d          0 Jan 01 00:00 /");
+            FTPParser.FileInfo parent = new FTPParser.FileInfo("drwxr-xr-x 1 ftp ftp 0 Jan 01 00:00 /");
             return treeJSON(parent);
         }
 
         public FTPParser.FileInfo treeJSON(FTPParser.FileInfo current) throws IOException {
 
+            if (current.getType() != FTPParser.TYPE.DIRECTORY
+                    || current.otherPermissions == null
+                    || !current.otherPermissions.read
+                    || !current.otherPermissions.execute) {
+                return current;
+            }
 
             this.cd(current.getName());
             List<FTPParser.FileInfo> children =  this.getFile();
 
-            for (FTPParser.FileInfo f: children) {
+            for (FTPParser.FileInfo f : children) {
+                String name = f.getName();
+
+                if (".".equals(name) || "..".equals(name)) continue;
+
                 if (f.getType() == FTPParser.TYPE.DIRECTORY) {
-                    this.cd(f.getName());
-
-                    FTPParser.FileInfo jsonChild = treeJSON(f);
-                    current.addChild(jsonChild);
-
-                    this.cwd();
-                } else if (f.getType() == FTPParser.TYPE.FILE) {
                     current.addChild(f);
-                } else {
-                    continue;
+                    treeJSON(f);
+                } else if (f.getType() == FTPParser.TYPE.FILE || f.getType() == FTPParser.TYPE.SYMBOLIC_LINC) {
+                    current.addChild(f);
                 }
-
             }
+            this.cwd();
+            Gson gson = new GsonBuilder()
+                    .excludeFieldsWithoutExposeAnnotation()
+                    .setPrettyPrinting()
+                    .create();
+
+            String json = gson.toJson(current);
+            System.out.println(json);
+
+            Path output = Path.of(System.getProperty("user.dir"), "ftp_tree.json");
+
+            try (FileWriter writer = new FileWriter(output.toFile())) {
+                writer.write(json);
+            }
+
+            System.out.println("JSON téléchargé dans : " + output.toAbsolutePath());
 
             return current;
         }
