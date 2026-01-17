@@ -4,17 +4,18 @@ import java.io.IOException;
 
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         String host = "ftp.free.fr" ;
+        int port = 21;
+
         FTPClient client = new FTPClient();
+        client.connect(host, port);
+        client.login("anonymous", "yes");
 
-        try {
-            System.out.println("Connexion à " + host + "...");
-            client.connect(host); // Établit la connexion sur le port 21
-
-        } catch (IOException e) {
-            System.err.println("Erreur de connexion : " + e.getMessage());
-        }
+        //client.cd("MPlayer");
+        client.ls_l();
+        client.tree();
+        client.disconnect();
     }
 }
