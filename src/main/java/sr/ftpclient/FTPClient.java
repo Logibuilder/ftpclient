@@ -1,61 +1,40 @@
-    package org.example;
+    package sr.ftpclient;
 
     import com.google.gson.Gson;
     import com.google.gson.GsonBuilder;
 
     import java.io.BufferedReader;
-    import java.io.FileWriter;
     import java.io.IOException;
     import java.io.InputStreamReader;
     import java.net.Socket;
-    import java.nio.file.Path;
+
+    import java.util.HashSet;
     import java.util.List;
+    import java.util.Set;
 
 
     public class FTPClient {
 
         private FTPSocket clientSocket;
+        private Commande commande = new Commande();
+
+        public void setCommande(Commande commande) {
+            this.commande = commande;
+        }
 
         public FTPClient() {
         }
 
-        @FunctionalInterface
-        public interface FTPAction{
-            String excute() throws IOException;
-        }
-
-        public  String saffCall(FTPAction action) throws  IOException{
-
-            String reponse = action.excute();
-
-            while (reponse != null && reponse.length() >=3 && reponse.startsWith("1") ) {
-                reponse = clientSocket.read();
-            }
-
-            if (reponse == null || reponse.length() < 3) {
-                throw new FTPException(-1, "Réponse FTP invalide");
-            }
-
-            int code = Integer.parseInt(reponse.substring(0, 3));
-
-            if (code >= 400) throw new FTPException(code, reponse.substring(3));
-
-            return reponse;
-        }
-
         public boolean cd(String path) throws IOException {
 
-            String reponse =  saffCall(() -> {
-                clientSocket.write("CWD " + path);
-                return clientSocket.read();
-            });
+            clientSocket.write("CWD " + path);
+            String reponse =  clientSocket.read();
             return reponse.startsWith("250");
         }
 
         public void connect(String host,int port) throws IOException {
             this.clientSocket = new FTPSocket(host, port);
             clientSocket.connect();
-            clientSocket.read();
         }
 
         public void login(String user, String pass) throws IOException {
@@ -114,12 +93,26 @@
             }
         }
 
-        public void cwd() throws IOException {
-            // On envoie la commande dédiée
+        public boolean cwd() throws IOException {
             this.clientSocket.write("CDUP");
+            String reponse = this.clientSocket.read();
+            return reponse != null && reponse.startsWith("250");
+        }
 
-            // On lit la confirmation du serveur (ex: "250 Directory successfully changed")
-            this.clientSocket.read();
+        public String pwd() throws IOException {
+            clientSocket.write("PWD");
+            String res = clientSocket.read();
+
+            if (res != null && res.startsWith("257")) {
+                int firstQuote = res.indexOf('\"');
+                int lastQuote = res.lastIndexOf('\"');
+
+                if (firstQuote != -1 && lastQuote != -1 && firstQuote != lastQuote) {
+                    String path = res.substring(firstQuote + 1, lastQuote);
+                    return path.replace("\"\"", "\"");
+                }
+            }
+            return null;
         }
 
         public List<FTPParser.FileInfo> getFile() throws IOException {
@@ -148,50 +141,61 @@
         }
 
         public void tree() throws IOException {
-            tree(0);
+            tree("/", 0, new HashSet<>());
         }
 
-        /**
-         * Fonction AfficherArborescence(nomDossier, niveau)
-         *     1. Envoyer CWD nomDossier au serveur
-         *     2. Passer en mode PASV et récupérer le port
-         *     3. Envoyer LIST sur le canal de contrôle
-         *     4. Lire les lignes sur le canal de données :
-         *        Pour chaque ligne reçue :
-         *           a. Extraire le nom et le type (Dossier ou Fichier)
-         *           b. Afficher avec une indentation (basée sur 'niveau')
-         *           c. SI c'est un Dossier ET nom différent de "." ou ".." :
-         *                AfficherArborescence(nom, niveau + 1)
-         *     5. Envoyer CDUP (pour remonter au parent)
-         * @throws IOException
-         */
-        public void tree(int level ) throws IOException {
-            if (level > 10) return;
-            List<FTPParser.FileInfo> fileInfos =  this.getFile();
-            for (FTPParser.FileInfo f : fileInfos) {
-                String name = f.getName();
+        private void tree(String path, int level, Set<String> visited) throws IOException {
+            if (level > 10) {
+                System.out.println("  ".repeat(level) + "(Profondeur maximale atteinte)");
+                return;
+            }
 
-                if (".".equals(name) || "..".equals(name)) continue;
+            // Sauvegarder le répertoire courant ORIGINAL
+            String originalPwd = this.pwd();
 
-                if (f.getType() == FTPParser.TYPE.DIRECTORY) {
+            try {
+                // Se déplacer dans le répertoire à explorer
+                if (!this.cd(path)) {
+                    System.out.println("  ".repeat(level) + "└── " + path + " (accès refusé)");
+                    return;
+                }
 
-                    System.out.print("  ".repeat(level) + "└──" +  f.getName());
-                    if (f.otherPermissions.read){ //&& f.otherPermissions.write) {
-                        cd(name);
-                        tree(level + 1);
-                        cwd();
-                    } else {
-                        System.out.print(" (protected)");
+                String currentPath = this.pwd();
+                if (visited.contains(currentPath)) {
+                    System.out.println("  ".repeat(level) + "└── " + path + " (déjà visité)");
+                    return;
+                }
+                visited.add(currentPath);
+
+                // Lister les fichiers
+                List<FTPParser.FileInfo> fileInfos = this.getFile();
+
+                for (FTPParser.FileInfo f : fileInfos) {
+                    String name = f.getName();
+
+                    if (".".equals(name) || "..".equals(name)) continue;
+
+                    if (f.getType() == FTPParser.TYPE.DIRECTORY) {
+                        System.out.println("  ".repeat(level) + "└── " + name);
+
+                        // Explorer le sous-répertoire
+                        tree(name, level + 1, visited);
+
+                    } else if (f.getType() == FTPParser.TYPE.FILE) {
+                        System.out.println("  ".repeat(level) + "├── " + name);
+                    } else if (f.getType() == FTPParser.TYPE.SYMBOLIC_LINC) {
+                        System.out.println("  ".repeat(level) + "├── " + name + " (link)");
                     }
-                    System.out.println();
-
-                } else if (f.getType() == FTPParser.TYPE.FILE) {
-                    System.out.println( "  ".repeat(level) + "├──" +  f.getName());
-                } else if (f.getType() == FTPParser.TYPE.SYMBOLIC_LINC) {
-                    System.out.println( "  ".repeat(level) + "├──" +  f.getName() + " (link)");
+                }
+            } finally {
+                // TOUJOURS revenir au répertoire original
+                if (originalPwd != null) {
+                    this.cd(originalPwd);
                 }
             }
         }
+
+
 
         public FTPParser.FileInfo  treeJSON() throws IOException {
             FTPParser.FileInfo parent = new FTPParser.FileInfo("drwxr-xr-x 1 ftp ftp 0 Jan 01 00:00 /");
@@ -202,43 +206,25 @@
 
             if (current.getType() != FTPParser.TYPE.DIRECTORY
                     || current.otherPermissions == null
-                    || !current.otherPermissions.read
-                    || !current.otherPermissions.execute) {
+                    || !current.otherPermissions.read) {
                 return current;
             }
 
-            this.cd(current.getName());
+            if (!this.cd(current.getName())) {
+                return current;
+            }
             List<FTPParser.FileInfo> children =  this.getFile();
 
             for (FTPParser.FileInfo f : children) {
                 String name = f.getName();
-
                 if (".".equals(name) || "..".equals(name)) continue;
 
+                current.addChild(f);
+
                 if (f.getType() == FTPParser.TYPE.DIRECTORY) {
-                    current.addChild(f);
                     treeJSON(f);
-                } else if (f.getType() == FTPParser.TYPE.FILE || f.getType() == FTPParser.TYPE.SYMBOLIC_LINC) {
-                    current.addChild(f);
                 }
             }
-            this.cwd();
-            Gson gson = new GsonBuilder()
-                    .excludeFieldsWithoutExposeAnnotation()
-                    .setPrettyPrinting()
-                    .create();
-
-            String json = gson.toJson(current);
-            System.out.println(json);
-
-            Path output = Path.of(System.getProperty("user.dir"), "ftp_tree.json");
-
-            try (FileWriter writer = new FileWriter(output.toFile())) {
-                writer.write(json);
-            }
-
-            System.out.println("JSON téléchargé dans : " + output.toAbsolutePath());
-
             return current;
         }
 

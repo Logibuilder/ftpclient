@@ -1,4 +1,4 @@
-package org.example;
+package sr.ftpclient;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,6 +12,7 @@ public class FTPSocket {
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
+    public static final int TIME_OUT = 5000;
 
     public FTPSocket(String host, int port) throws IOException {
         this.host = host;
@@ -21,25 +22,22 @@ public class FTPSocket {
 
     //pour connecter un socket
     public void connect() throws IOException {
-        System.out.println("Connexion à " + host + ":" + port);
-        this.socket = new Socket(host, port);
+            System.out.println("Connexion à " + host + ":" + port);
+            this.socket = new Socket(host, port);
+            this.socket.setSoTimeout(TIME_OUT);
 
-        this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-        this.writer = new PrintWriter(socket.getOutputStream(), true);
-        //this.read();
+            this.writer = new PrintWriter(socket.getOutputStream(), true);
+            this.read();
     }
 
     public void authenticate(String user, String pass) throws IOException {
-        try {
             this.write("USER " + user);
             this.read();
 
             this.write("PASS " + pass);
             this.read();
-        } catch (FTPException e) {
-            throw e;
-        }
     }
 
     //pour ecrir sur le scket
@@ -50,11 +48,11 @@ public class FTPSocket {
 
     //pour lire sur le socket
     public String  read() throws IOException {
-        try {
-            return this.reader.readLine();
-        } catch (FTPException e) {
-            throw e;
+        String line = reader.readLine();
+        if (line == null) {
+            throw new IOException("Connexion FTP interrompue");
         }
+        return line;
     }
 
 

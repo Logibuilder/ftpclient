@@ -1,4 +1,4 @@
-package org.example;
+package sr.ftpclient;
 
 import com.google.gson.annotations.Expose;
 
