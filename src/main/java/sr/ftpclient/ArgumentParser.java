@@ -1,4 +1,4 @@
-package org.example;
+package sr.ftpclient;
 
 public class Message {
 

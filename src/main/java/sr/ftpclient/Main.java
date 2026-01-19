@@ -6,7 +6,7 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        String host = "ftp.free.fr" ;
+        String host = "ftp.ubuntu.com" ;
         int port = 21;
 
         FTPClient client = new FTPClient();
