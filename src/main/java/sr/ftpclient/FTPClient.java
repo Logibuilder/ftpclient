@@ -141,56 +141,47 @@
         }
 
         public void tree() throws IOException {
-            tree("/", 0, new HashSet<>());
+            tree(0);
         }
 
-        private void tree(String path, int level, Set<String> visited) throws IOException {
-            if (level > 10) {
-                System.out.println("  ".repeat(level) + "(Profondeur maximale atteinte)");
-                return;
-            }
+        /**
+         * Fonction AfficherArborescence(nomDossier, niveau)
+         *     1. Envoyer CWD nomDossier au serveur
+         *     2. Passer en mode PASV et récupérer le port
+         *     3. Envoyer LIST sur le canal de contrôle
+         *     4. Lire les lignes sur le canal de données :
+         *        Pour chaque ligne reçue :
+         *           a. Extraire le nom et le type (Dossier ou Fichier)
+         *           b. Afficher avec une indentation (basée sur 'niveau')
+         *           c. SI c'est un Dossier ET nom différent de "." ou ".." :
+         *                AfficherArborescence(nom, niveau + 1)
+         *     5. Envoyer CDUP (pour remonter au parent)
+         * @throws IOException
+         */
+        public void tree(int level) throws IOException {
 
-            // Sauvegarder le répertoire courant ORIGINAL
-            String originalPwd = this.pwd();
+            if (level > 3) return;
+            List<FTPParser.FileInfo> fileInfos =  this.getFile();
+            for (FTPParser.FileInfo f : fileInfos) {
+                String name = f.getName();
 
-            try {
-                // Se déplacer dans le répertoire à explorer
-                if (!this.cd(path)) {
-                    System.out.println("  ".repeat(level) + "└── " + path + " (accès refusé)");
-                    return;
+                if (".".equals(name) || "..".equals(name)) continue;
+                if (f.getType() == FTPParser.TYPE.SYMBOLIC_LINC) {
+                    continue;
                 }
-
-                String currentPath = this.pwd();
-                if (visited.contains(currentPath)) {
-                    System.out.println("  ".repeat(level) + "└── " + path + " (déjà visité)");
-                    return;
-                }
-                visited.add(currentPath);
-
-                // Lister les fichiers
-                List<FTPParser.FileInfo> fileInfos = this.getFile();
-
-                for (FTPParser.FileInfo f : fileInfos) {
-                    String name = f.getName();
-
-                    if (".".equals(name) || "..".equals(name)) continue;
-
-                    if (f.getType() == FTPParser.TYPE.DIRECTORY) {
-                        System.out.println("  ".repeat(level) + "└── " + name);
-
-                        // Explorer le sous-répertoire
-                        tree(name, level + 1, visited);
-
-                    } else if (f.getType() == FTPParser.TYPE.FILE) {
-                        System.out.println("  ".repeat(level) + "├── " + name);
-                    } else if (f.getType() == FTPParser.TYPE.SYMBOLIC_LINC) {
-                        System.out.println("  ".repeat(level) + "├── " + name + " (link)");
+                if (f.getType() == FTPParser.TYPE.DIRECTORY) {
+                    System.out.println("  ".repeat(level) + "└──" +  f.getName()); // ⚠️ print sans \n
+                    if (this.cd(name)) {
+                        tree(level + 1);  // ← Ceci va afficher sur la même ligne !
+                        if (!this.cwd()) {
+                            System.err.println("Erreur: impossible de remonter depuis " + name);
+                            break;
+                        }
+                    } else {
+                        System.out.println("  ".repeat(level + 1) + " (protected)");
                     }
-                }
-            } finally {
-                // TOUJOURS revenir au répertoire original
-                if (originalPwd != null) {
-                    this.cd(originalPwd);
+                } else if (f.getType() == FTPParser.TYPE.FILE) {
+                    System.out.println( "  ".repeat(level) + "├──" +  f.getName());
                 }
             }
         }

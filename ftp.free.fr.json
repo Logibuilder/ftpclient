@@ -1,0 +1,36 @@
+{
+  "name": "/",
+  "children": [
+    {
+      "name": "MPlayer -\u003e mirrors/mplayerhq.hu/MPlayer"
+    },
+    {
+      "name": "awstats",
+      "children": []
+    },
+    {
+      "name": "lost+found",
+      "children": []
+    },
+    {
+      "name": "mirrors",
+      "children": []
+    },
+    {
+      "name": "nzb",
+      "children": []
+    },
+    {
+      "name": "pub",
+      "children": []
+    },
+    {
+      "name": "stats",
+      "children": []
+    },
+    {
+      "name": "tmp",
+      "children": []
+    }
+  ]
+}
