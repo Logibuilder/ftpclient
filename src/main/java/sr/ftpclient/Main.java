@@ -40,7 +40,7 @@ public class Main {
             } else {
                 // Format texte
                 if (commande.getTraversalMode() == Commande.TraversalMode.DFS) {
-                    client.tree();
+                    client.treeBFS();
                 } else {
                     client.ls();
                 }

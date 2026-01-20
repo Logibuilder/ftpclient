@@ -42,6 +42,16 @@ public class FTPParser {
         DIRECTORY, FILE, UNKNOWN, SYMBOLIC_LINC
     }
 
+    public static class QueueElement {
+        String path;
+        int level;
+
+        public QueueElement(String path, int level) {
+            this.path = path;
+            this.level = level;
+        }
+    }
+
     public static class FileInfo {
         private final TYPE type;
         @Expose

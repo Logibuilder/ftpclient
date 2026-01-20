@@ -20,6 +20,8 @@ public class FTPSocket {
         this.port = port;
     }
 
+
+
     //pour connecter un socket
     public void connect() throws IOException {
             System.out.println("Connexion à " + host + ":" + port);
@@ -29,15 +31,26 @@ public class FTPSocket {
             this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             this.writer = new PrintWriter(socket.getOutputStream(), true);
-            this.read();
+            String reponse = this.read();
+
+            if (!reponse.startsWith("220")) {
+                throw new FTPException(extractCode(reponse), "Echec de connection " + reponse);
+            }
     }
 
     public void authenticate(String user, String pass) throws IOException {
             this.write("USER " + user);
-            this.read();
+            String repUser = this.read();
+
+            if (!repUser.startsWith("331") && !repUser.startsWith("230")) {
+                throw new FTPException(extractCode(repUser), "Utilisateur \"" + user + "\" refusé : " + repUser);
+            }
 
             this.write("PASS " + pass);
-            this.read();
+            String repPass = this.read();
+        if (!repPass.startsWith("230")) {
+            throw new FTPException(extractCode(repPass), "Mot de passe refusé : " + repPass);
+        }
     }
 
     //pour ecrir sur le scket
@@ -62,5 +75,16 @@ public class FTPSocket {
         if (writer != null) writer.close();
         if (reader != null) reader.close();
         if (socket != null) socket.close();
+    }
+
+    private int extractCode(String response) {
+        try {
+            if (response != null && response.length() >= 3) {
+                return Integer.parseInt(response.substring(0, 3));
+            }
+        } catch (NumberFormatException e) {
+            // Ignorer si pas un nombre
+        }
+        return 0;
     }
 }
