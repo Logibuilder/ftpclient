@@ -1,0 +1,229 @@
+{
+  "name": "/",
+  "children": [
+    {
+      "name": "ubuntu",
+      "children": [
+        {
+          "name": "dists",
+          "children": [
+            {
+              "name": "bionic",
+              "children": []
+            },
+            {
+              "name": "bionic-backports",
+              "children": []
+            },
+            {
+              "name": "bionic-proposed",
+              "children": []
+            },
+            {
+              "name": "bionic-security",
+              "children": []
+            },
+            {
+              "name": "bionic-updates",
+              "children": []
+            },
+            {
+              "name": "focal",
+              "children": []
+            },
+            {
+              "name": "focal-backports",
+              "children": []
+            },
+            {
+              "name": "focal-proposed",
+              "children": []
+            },
+            {
+              "name": "focal-security",
+              "children": []
+            },
+            {
+              "name": "focal-updates",
+              "children": []
+            },
+            {
+              "name": "jammy",
+              "children": []
+            },
+            {
+              "name": "jammy-backports",
+              "children": []
+            },
+            {
+              "name": "jammy-proposed",
+              "children": []
+            },
+            {
+              "name": "jammy-security",
+              "children": []
+            },
+            {
+              "name": "jammy-updates",
+              "children": []
+            },
+            {
+              "name": "noble",
+              "children": []
+            },
+            {
+              "name": "noble-backports",
+              "children": []
+            },
+            {
+              "name": "noble-proposed",
+              "children": []
+            },
+            {
+              "name": "noble-security",
+              "children": []
+            },
+            {
+              "name": "noble-updates",
+              "children": []
+            },
+            {
+              "name": "plucky",
+              "children": []
+            },
+            {
+              "name": "plucky-backports",
+              "children": []
+            },
+            {
+              "name": "plucky-proposed",
+              "children": []
+            },
+            {
+              "name": "plucky-security",
+              "children": []
+            },
+            {
+              "name": "plucky-updates",
+              "children": []
+            },
+            {
+              "name": "questing",
+              "children": []
+            },
+            {
+              "name": "questing-backports",
+              "children": []
+            },
+            {
+              "name": "questing-proposed",
+              "children": []
+            },
+            {
+              "name": "questing-security",
+              "children": []
+            },
+            {
+              "name": "questing-updates",
+              "children": []
+            },
+            {
+              "name": "resolute",
+              "children": []
+            },
+            {
+              "name": "resolute-backports",
+              "children": []
+            },
+            {
+              "name": "resolute-proposed",
+              "children": []
+            },
+            {
+              "name": "resolute-security",
+              "children": []
+            },
+            {
+              "name": "resolute-updates",
+              "children": []
+            },
+            {
+              "name": "trusty",
+              "children": []
+            },
+            {
+              "name": "trusty-backports",
+              "children": []
+            },
+            {
+              "name": "trusty-proposed",
+              "children": []
+            },
+            {
+              "name": "trusty-security",
+              "children": []
+            },
+            {
+              "name": "trusty-updates",
+              "children": []
+            },
+            {
+              "name": "xenial",
+              "children": []
+            },
+            {
+              "name": "xenial-backports",
+              "children": []
+            },
+            {
+              "name": "xenial-proposed",
+              "children": []
+            },
+            {
+              "name": "xenial-security",
+              "children": []
+            },
+            {
+              "name": "xenial-updates",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "indices",
+          "children": []
+        },
+        {
+          "name": "pool",
+          "children": [
+            {
+              "name": "main",
+              "children": []
+            },
+            {
+              "name": "multiverse",
+              "children": []
+            },
+            {
+              "name": "restricted",
+              "children": []
+            },
+            {
+              "name": "universe",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "project",
+          "children": [
+            {
+              "name": "trace",
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

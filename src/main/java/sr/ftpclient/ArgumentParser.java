@@ -91,7 +91,9 @@ public class ArgumentParser {
                         printHelp();
                         System.exit(0);
                         break;
-
+                    case "-l":
+                        options.setLongListing(true);
+                        break;
                     default:
                         System.err.println("Option inconnue : " + arg);
                         printHelp();

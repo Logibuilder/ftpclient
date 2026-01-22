@@ -9,11 +9,12 @@ public class Commande {
 
     private OutputFormat outputFormat = OutputFormat.TEXT;
 
-    private TraversalMode traversalMode = TraversalMode.DFS;
+    private TraversalMode traversalMode = null;
 
     private boolean enableResume = false;
     private String resumeFile = null;
     private boolean saveProgress = false;
+    private boolean longListing = false; // Par défaut false (ls simple)
 
     // Niveau >16 (options style tree)
     private boolean dirsOnly = false;
@@ -33,6 +34,9 @@ public class Commande {
     }
 
     // Getters et setters
+    public boolean isLongListing() { return longListing; }
+    public void setLongListing(boolean longListing) { this.longListing = longListing; }
+
     public String getHost() { return host; }
     public void setHost(String host) { this.host = host; }
 

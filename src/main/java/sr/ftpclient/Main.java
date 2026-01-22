@@ -16,13 +16,14 @@ public class Main {
             FTPClient client = new FTPClient();
             client.setCommande(commande);
 
+
             // Connexion
             client.connect(commande.getHost(), 21);
             client.login(commande.getLogin(), commande.getPassword());
 
-            // Exécuter l'exploration selon le format demandé
+
+            // options
             if (commande.getOutputFormat() == Commande.OutputFormat.JSON) {
-                // Format JSON
                 FTPParser.FileInfo tree = client.treeJSON();
 
                 Gson gson = new GsonBuilder()
@@ -32,15 +33,18 @@ public class Main {
 
                 String json = gson.toJson(tree);
                 System.out.println(json);
-
-                // Optionnel : sauvegarder dans un fichier
                 try (FileWriter writer = new FileWriter(commande.getHost() + ".json")) {
                     writer.write(json);
                 }
-            } else {
+
+            } else  {
                 // Format texte
                 if (commande.getTraversalMode() == Commande.TraversalMode.DFS) {
+                    client.treeDFS();
+                } else if (commande.getTraversalMode() == Commande.TraversalMode.BFS) {
                     client.treeBFS();
+                } else if (commande.isLongListing()){
+                    client.ls_l();
                 } else {
                     client.ls();
                 }

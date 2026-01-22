@@ -266,10 +266,13 @@
 
         public FTPParser.FileInfo  treeJSON() throws IOException {
             FTPParser.FileInfo parent = new FTPParser.FileInfo("drwxr-xr-x 1 ftp ftp 0 Jan 01 00:00 /");
-            return treeJSON(parent);
+            return treeJSON(parent, 0);
         }
 
-        public FTPParser.FileInfo treeJSON(FTPParser.FileInfo current) throws IOException {
+
+        public FTPParser.FileInfo treeJSON(FTPParser.FileInfo current, int level) throws IOException {
+
+            if (level >= this.commande.getMaxDepth()) return current;
 
             if (current.getType() != FTPParser.TYPE.DIRECTORY
                     || current.otherPermissions == null
@@ -286,11 +289,14 @@
                 for (FTPParser.FileInfo f : children) {
                     String name = f.getName();
                     if (".".equals(name) || "..".equals(name)) continue;
-
-                    current.addChild(f);
+                    if (!this.commande.isDirsOnly() ) {
+                        current.addChild(f);
+                    } else if (f.getType() == FTPParser.TYPE.DIRECTORY){
+                        current.addChild(f);
+                    }
 
                     if (f.getType() == FTPParser.TYPE.DIRECTORY) {
-                        treeJSON(f);
+                        treeJSON(f, level + 1);
                     }
                 }
             } finally {
