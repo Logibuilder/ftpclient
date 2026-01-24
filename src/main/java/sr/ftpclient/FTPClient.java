@@ -27,7 +27,9 @@
         }
 
         public void connect(String host,int port) throws IOException {
-            this.clientSocket = new FTPSocket(host, port);
+            if (this.clientSocket == null) {
+                this.clientSocket = new FTPSocket(host, port);
+            }
             clientSocket.connect();
         }
 
