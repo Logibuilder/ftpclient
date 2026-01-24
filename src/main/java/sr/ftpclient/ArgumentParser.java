@@ -47,46 +47,11 @@ public class ArgumentParser {
                         options.setTraversalMode(Commande.TraversalMode.DFS);
                         break;
 
-                    // Niveau 15-16 : Reprise sur panne
-                    case "--resume":
-                        options.setEnableResume(true);
-                        if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
-                            options.setResumeFile(args[++i]);
-                        }
-                        break;
-                    case "--save-progress":
-                        options.setSaveProgress(true);
-                        break;
-
                     // Niveau >16 : Options style tree
                     case "--dirs-only":
                         options.setDirsOnly(true);
                         break;
-                    case "-f":
-                    case "--full-path":
-                        options.setFullPath(true);
-                        break;
-                    case "-P":
-                        if (i + 1 < args.length) {
-                            options.setIncludePattern(args[++i]);
-                        }
-                        break;
-                    case "-I":
-                        if (i + 1 < args.length) {
-                            options.setExcludePattern(args[++i]);
-                        }
-                        break;
-                    case "--dirsfirst":
-                        options.setDirsFirst(true);
-                        break;
-                    case "-h":
-                    case "--human-readable":
-                        options.setHumanReadable(true);
-                        break;
-                    case "-s":
-                    case "--size":
-                        options.setShowSize(true);
-                        break;
+
                     case "--help":
                         printHelp();
                         System.exit(0);

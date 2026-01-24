@@ -12,6 +12,7 @@ public class Main {
             // Parser les arguments
             Commande commande = ArgumentParser.parse(args);
 
+
             // Créer et configurer le client FTP
             FTPClient client = new FTPClient();
             client.setCommande(commande);
