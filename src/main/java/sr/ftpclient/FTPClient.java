@@ -453,7 +453,7 @@
          */
         public FTPParser.FileInfo treeJSON(FTPParser.FileInfo current, String currentPath, int level) throws IOException {
             //Vérifications de base (Profondeur, Permissions)
-            if (level >= this.commande.getMaxDepth()) return current;
+            if (this.commande.getMaxDepth() > 0 && level >= this.commande.getMaxDepth()) return current;
 
             if (current.getType() != FTPParser.TYPE.DIRECTORY
                     || current.otherPermissions == null
