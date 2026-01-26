@@ -1,3 +1,4 @@
+
 package sr.ftpclient;
 
 import com.google.gson.Gson;
@@ -6,7 +7,18 @@ import com.google.gson.GsonBuilder;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * Point d'entrée principal de l'application TreeFTP.
+ * Cette classe orchestre l'analyse des arguments, la configuration du client FTP,
+ * l'exécution des commandes (ls, tree, json) et la gestion des erreurs.
+ *
+ */
 public class Main {
+    /**
+     * Méthode principale exécutée au lancement de l'application.
+     *
+     * @param args Les arguments de la ligne de commande (hôte, login, mot de passe, options).
+     */
     public static void main(String[] args) {
         try {
             // Parser les arguments
@@ -61,7 +73,6 @@ public class Main {
             System.exit(1);
         } catch (Exception e) {
             System.err.println("Erreur: " + e.getMessage());
-            e.printStackTrace();
             System.exit(1);
         }
     }

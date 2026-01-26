@@ -6,19 +6,37 @@
 
     import java.util.*;
 
-
+    /**
+     * Client FTP principal gérant la logique métier des échanges avec le serveur.
+     * Cette classe implémente les commandes de navigation (CD, PWD), de listage (LIST, NLST)
+     * et les algorithmes de parcours d'arborescence (DFS, BFS).
+     * Elle gère également la tolérance aux pannes réseau via des mécanismes de reconnexion.
+     *
+     */
     public class FTPClient {
 
         private FTPSocket clientSocket;
         private Commande commande = new Commande();
-
+        /**
+         * Définit la configuration de la commande en cours.
+         *
+         * @param commande L'objet contenant les paramètres d'exécution (hôte, login, options...).
+         */
         public void setCommande(Commande commande) {
             this.commande = commande;
         }
-
+        /**
+         * Constructeur par défaut.
+         */
         public FTPClient() {
         }
-
+        /**
+         * Change le répertoire courant sur le serveur FTP (commande CWD).
+         *
+         * @param path Le chemin relatif ou absolu du dossier cible.
+         * @return true si le changement a réussi (code 250), false sinon.
+         * @throws IOException En cas d'erreur de communication.
+         */
         public boolean cd(String path) throws IOException {
 
             clientSocket.write("CWD " + path);
@@ -26,6 +44,14 @@
             return reponse.startsWith("250");
         }
 
+        /**
+         * Établit la connexion TCP avec le serveur FTP.
+         * Si un socket existe déjà (cas des tests unitaires avec injection), il est réutilisé.
+         *
+         * @param host L'adresse du serveur (nom de domaine ou IP).
+         * @param port Le port de connexion (généralement 21).
+         * @throws IOException En cas d'échec de la connexion socket.
+         */
         public void connect(String host,int port) throws IOException {
             if (this.clientSocket == null) {
                 this.clientSocket = new FTPSocket(host, port);
@@ -33,21 +59,38 @@
             clientSocket.connect();
         }
 
+        /**
+         * Authentifie l'utilisateur auprès du serveur FTP (commandes USER et PASS).
+         *
+         * @param user Le nom d'utilisateur.
+         * @param pass Le mot de passe.
+         * @throws IOException En cas d'échec d'authentification ou d'erreur réseau.
+         */
         public void login(String user, String pass) throws IOException {
             clientSocket.authenticate(user, pass);
         }
-
+        /**
+         * Active le mode passif (commande PASV) et récupère la réponse du serveur.
+         *
+         * @return La réponse brute du serveur contenant l'IP et le port pour la connexion de données.
+         * @throws IOException En cas d'erreur réseau.
+         */
         private String  toPassifMode() throws IOException {
             this.clientSocket.write("PASV");
             return this.clientSocket.read();
         }
-
+        /**
+         * Affiche le contenu du répertoire courant (liste simple des noms).
+         * Utilise la commande NLST et le mode passif.
+         *
+         * @throws IOException En cas d'erreur lors du transfert de données.
+         */
         public void ls() throws IOException {
 
             String reponsePasv = this.toPassifMode();
             FTPParser.FtpConnectionInfo conInf = FTPParser.calculerIpEtPort(reponsePasv);
 
-            try (Socket dataSocket = new Socket(conInf.ip, conInf.port)) {
+            try (Socket dataSocket = new Socket(conInf.getIp(), conInf.getPort())) {
 
                 // 3. Envoyer la commande LIST (Canal de contrôle)
                 clientSocket.write("NLST");
@@ -66,11 +109,17 @@
             }
         }
 
+        /**
+         * Affiche le contenu détaillé du répertoire courant (permissions, taille, date...).
+         * Utilise la commande LIST et le mode passif.
+         *
+         * @throws IOException En cas d'erreur lors du transfert de données.
+         */
         public void ls_l() throws IOException {
             String reponsePasv = this.toPassifMode();
             FTPParser.FtpConnectionInfo conInf = FTPParser.calculerIpEtPort(reponsePasv);
 
-            try (Socket dataSocket = new Socket(conInf.ip, conInf.port)) {
+            try (Socket dataSocket = new Socket(conInf.getIp(), conInf.getPort())) {
 
                 // 3. Envoyer la commande LIST (Canal de contrôle)
                 clientSocket.write("LIST");
@@ -89,12 +138,23 @@
             }
         }
 
+        /**
+         * Remonte au répertoire parent (commande CDUP).
+         *
+         * @return true si la remontée a réussi, false sinon.
+         * @throws IOException En cas d'erreur réseau.
+         */
         public boolean cwd() throws IOException {
             this.clientSocket.write("CDUP");
             String reponse = this.clientSocket.read();
             return reponse != null && reponse.startsWith("250");
         }
-
+        /**
+         * Récupère le chemin absolu du répertoire courant (commande PWD).
+         *
+         * @return Le chemin courant sous forme de chaîne, ou null si l'extraction échoue.
+         * @throws IOException En cas d'erreur réseau.
+         */
         public String pwd() throws IOException {
             clientSocket.write("PWD");
             String res = clientSocket.read();
@@ -110,7 +170,13 @@
             }
             return null;
         }
-
+        /**
+         * Récupère la liste structurée des fichiers et dossiers du répertoire courant.
+         * Cette méthode parse la réponse de la commande LIST pour créer des objets FileInfo.
+         *
+         * @return Une liste d'objets {@link FTPParser.FileInfo} représentant le contenu du dossier.
+         * @throws IOException En cas d'erreur réseau ou si le mode passif échoue.
+         */
         public List<FTPParser.FileInfo> getFile() throws IOException {
             String responsePasv = this.toPassifMode();
 
@@ -124,7 +190,7 @@
 
             StringBuilder lines = new StringBuilder();
 
-            try (Socket dataSocket = new Socket(conInfo.ip, conInfo.port)) {
+            try (Socket dataSocket = new Socket(conInfo.getIp(), conInfo.getPort())) {
                 clientSocket.write("LIST");
                 String responseList = clientSocket.read();
 
@@ -147,24 +213,37 @@
             return FTPParser.getListFiles(lines.toString());
 
         }
-
+        /**
+         * Lance le parcours de l'arborescence en profondeur (DFS) depuis la racine ("/").
+         *
+         * @throws IOException En cas d'erreur non récupérable.
+         */
         public void treeDFS() throws IOException {
             treeDFS("/", 0);
         }
 
+//        /**
+//         *  Fonction AfficherArborescence(nomDossier, niveau)
+//         *     1. Envoyer CWD nomDossier au serveur
+//         *     2. Passer en mode PASV et récupérer le port
+//         *     3. Envoyer LIST sur le canal de contrôle
+//         *     4. Lire les lignes sur le canal de données :
+//         *        Pour chaque ligne reçue :
+//         *           a. Extraire le nom et le type (Dossier ou Fichier)
+//         *           b. Afficher avec une indentation (basée sur 'niveau')
+//         *           c. SI c'est un Dossier ET nom différent de "." ou ".." :
+//         *                AfficherArborescence(nom, niveau + 1)
+//         *     5. Envoyer CDUP (pour remonter au parent)
+//         * @throws IOException
+//         */
         /**
-         *  Fonction AfficherArborescence(nomDossier, niveau)
-         *     1. Envoyer CWD nomDossier au serveur
-         *     2. Passer en mode PASV et récupérer le port
-         *     3. Envoyer LIST sur le canal de contrôle
-         *     4. Lire les lignes sur le canal de données :
-         *        Pour chaque ligne reçue :
-         *           a. Extraire le nom et le type (Dossier ou Fichier)
-         *           b. Afficher avec une indentation (basée sur 'niveau')
-         *           c. SI c'est un Dossier ET nom différent de "." ou ".." :
-         *                AfficherArborescence(nom, niveau + 1)
-         *     5. Envoyer CDUP (pour remonter au parent)
-         * @throws IOException
+         * Parcours récursif de l'arborescence en profondeur (DFS).
+         * Affiche l'arborescence dans la console avec une indentation appropriée.
+         * Gère la tolérance aux pannes réseau avec des tentatives de reconnexion.
+         *
+         * @param currentPath Le chemin absolu du dossier en cours d'exploration.
+         * @param level Le niveau de profondeur actuel (pour l'indentation).
+         * @throws IOException En cas d'erreur réseau persistante après plusieurs tentatives.
          */
         public void treeDFS(String currentPath, int level) throws IOException {
             //option profondeur max
@@ -257,28 +336,40 @@
             }
         }
 
+//        /**
+//         * Fonction treeBFS() (Parcours en Largeur)
+//         * 1. Initialiser une File (Queue) contenant la racine "/" et le niveau 0.
+//         * 2. TANT QUE la File n'est pas vide :
+//         * a. Défiler (poll) l'élément courant (cheminDossier, niveau).
+//         * b. SI niveau > maxDepth, passer au suivant.
+//         * c. Envoyer CWD cheminDossier (chemin absolu) au serveur.
+//         * d. Passer en mode PASV et récupérer le port.
+//         * e. Envoyer LIST sur le canal de contrôle.
+//         * f. Lire les lignes sur le canal de données :
+//         * Pour chaque ligne reçue :
+//         * i.   Extraire le nom et le type.
+//         * ii.  Afficher le fichier/dossier.
+//         * iii. SI c'est un Dossier ET nom différent de "." ou ".." :
+//         * Construire le chemin absolu de l'enfant.
+//         * Enfiler (add) l'enfant dans la File avec (niveau + 1).
+//         * @throws IOException
+//         */
         /**
-         * Fonction treeBFS() (Parcours en Largeur)
-         * 1. Initialiser une File (Queue) contenant la racine "/" et le niveau 0.
-         * 2. TANT QUE la File n'est pas vide :
-         * a. Défiler (poll) l'élément courant (cheminDossier, niveau).
-         * b. SI niveau > maxDepth, passer au suivant.
-         * c. Envoyer CWD cheminDossier (chemin absolu) au serveur.
-         * d. Passer en mode PASV et récupérer le port.
-         * e. Envoyer LIST sur le canal de contrôle.
-         * f. Lire les lignes sur le canal de données :
-         * Pour chaque ligne reçue :
-         * i.   Extraire le nom et le type.
-         * ii.  Afficher le fichier/dossier.
-         * iii. SI c'est un Dossier ET nom différent de "." ou ".." :
-         * Construire le chemin absolu de l'enfant.
-         * Enfiler (add) l'enfant dans la File avec (niveau + 1).
-         * @throws IOException
+         * Lance le parcours de l'arborescence en largeur (BFS) depuis la racine ("/").
+         *
+         * @throws IOException En cas d'erreur critique.
          */
         public void treeBFS() throws IOException {
             treeBFS(0);
         }
 
+        /**
+         * Parcours itératif de l'arborescence en largeur (BFS) utilisant une file d'attente.
+         * Affiche l'arborescence niveau par niveau.
+         *
+         * @param level Le niveau de départ (0).
+         * @throws IOException En cas d'erreur réseau persistante.
+         */
         public void treeBFS(int level) throws IOException{
             int maxDepth = this.commande.getMaxDepth();
 
@@ -338,6 +429,12 @@
             }
         }
 
+        /**
+         * Lance la construction de l'arbre JSON depuis la racine ("/").
+         *
+         * @return L'objet racine {@link FTPParser.FileInfo} contenant toute la structure.
+         * @throws IOException En cas d'erreur critique.
+         */
         public FTPParser.FileInfo treeJSON() throws IOException {
             // On initialise la racine
             FTPParser.FileInfo parent = new FTPParser.FileInfo("drwxr-xr-x 1 ftp ftp 0 Jan 01 00:00 /");
@@ -345,6 +442,15 @@
             return treeJSON(parent, "/", 0);
         }
 
+        /**
+         * Construit récursivement une structure d'objets représentant l'arborescence (pour export JSON).
+         *
+         * @param current Le noeud courant (dossier) à peupler.
+         * @param currentPath Le chemin absolu du dossier courant.
+         * @param level Le niveau de profondeur actuel.
+         * @return L'objet FileInfo mis à jour avec ses enfants.
+         * @throws IOException En cas d'erreur réseau persistante.
+         */
         public FTPParser.FileInfo treeJSON(FTPParser.FileInfo current, String currentPath, int level) throws IOException {
             //Vérifications de base (Profondeur, Permissions)
             if (level >= this.commande.getMaxDepth()) return current;
@@ -450,15 +556,22 @@
             return current;
         }
 
-
-
-
+        /**
+         * Ferme la connexion avec le serveur FTP.
+         *
+         * @throws IOException En cas d'erreur lors de la fermeture du socket.
+         */
         public void disconnect() throws IOException {
             clientSocket.close();
         }
 
 
-        // reconnect pour les pannes
+        /**
+         * Tente de reconnecter le client au serveur suite à une perte de connexion.
+         * Ferme l'ancienne connexion, en ouvre une nouvelle et ré-authentifie l'utilisateur.
+         *
+         * @throws IOException Si la reconnexion échoue totalement.
+         */
         private void reconnect() throws IOException{
             System.out.println(">>Connection perdu. Tentative de reconnection...");
 

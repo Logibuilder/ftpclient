@@ -1,9 +1,0 @@
-{
-  "name": "/",
-  "children": [
-    {
-      "name": "ubuntu",
-      "children": []
-    }
-  ]
-}

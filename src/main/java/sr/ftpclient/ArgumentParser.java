@@ -1,8 +1,17 @@
 package sr.ftpclient;
 
-
+/**
+ * Gère l'analyse des arguments de la ligne de commande.
+ * Convertit le tableau de chaînes en un objet de configuration {@link Commande}.
+ *
+ */
 public class ArgumentParser {
-
+    /**
+     * Analyse les arguments passés au programme.
+     *
+     * @param args Les arguments bruts.
+     * @return Un objet Commande configuré avec les options détectées.
+     */
     public static Commande parse(String[] args) {
         Commande options = new Commande();
 
@@ -16,10 +25,8 @@ public class ArgumentParser {
         while (i < args.length) {
             String arg = args[i];
 
-            // Options avec préfixe - ou --
             if (arg.startsWith("-")) {
                 switch (arg) {
-                    // Niveau 12-13 : Profondeur
                     case "-d":
                     case "--depth":
                     case "-L":
@@ -28,7 +35,6 @@ public class ArgumentParser {
                         }
                         break;
 
-                    // Niveau 13-14 : Format de sortie
                     case "-o":
                     case "--output":
                         if (i + 1 < args.length) {
@@ -39,7 +45,6 @@ public class ArgumentParser {
                         }
                         break;
 
-                    // Niveau 14-15 : Mode de parcours
                     case "--bfs":
                         options.setTraversalMode(Commande.TraversalMode.BFS);
                         break;
@@ -47,7 +52,6 @@ public class ArgumentParser {
                         options.setTraversalMode(Commande.TraversalMode.DFS);
                         break;
 
-                    // Niveau >16 : Options style tree
                     case "--dirs-only":
                         options.setDirsOnly(true);
                         break;
@@ -77,7 +81,9 @@ public class ArgumentParser {
 
         return options;
     }
-
+    /**
+     * Affiche l'aide d'utilisation du programme dans la console standard.
+     */
     private static void printHelp() {
         System.out.println("Usage: java -jar TreeFTP.jar <host> [login] [password] [OPTIONS]");
         System.out.println();
@@ -93,22 +99,14 @@ public class ArgumentParser {
         System.out.println("  --bfs               Parcours en largeur");
         System.out.println("  --dfs               Parcours en profondeur (défaut)");
         System.out.println("  --resume [file]     Reprendre depuis un fichier de progression");
-        System.out.println("  --save-progress     Sauvegarder la progression");
         System.out.println();
         System.out.println("Options avancées (style tree):");
         System.out.println("  --dirs-only         Afficher uniquement les dossiers");
-        System.out.println("  -f, --full-path     Afficher les chemins complets");
-        System.out.println("  -P <pattern>        Inclure uniquement les fichiers correspondants");
-        System.out.println("  -I <pattern>        Exclure les fichiers correspondants");
-        System.out.println("  --dirsfirst         Lister les dossiers en premier");
-        System.out.println("  -h, --human-readable Tailles lisibles");
-        System.out.println("  -s, --size          Afficher les tailles");
         System.out.println("  --help              Afficher cette aide");
         System.out.println();
         System.out.println("Exemples:");
-        System.out.println("  java -jar TreeFTP.jar ftp.ubuntu.com");
-        System.out.println("  java -jar TreeFTP.jar ftp.ubuntu.com anonymous pass -d 3");
-        System.out.println("  java -jar TreeFTP.jar ftp.ubuntu.com -o json --bfs");
-        System.out.println("  java -jar TreeFTP.jar ftp.ubuntu.com -d 5 --save-progress");
+        System.out.println("  java -jar TreeFTP.jar ftp.ubuntu.com anonymous pass");
+        System.out.println("  java -jar TreeFTP.jar ftp.ubuntu.com anonymous pass -o json");
     }
 }
+

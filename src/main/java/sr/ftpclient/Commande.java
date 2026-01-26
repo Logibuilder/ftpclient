@@ -1,5 +1,9 @@
 package sr.ftpclient;
 
+/**
+ * Classe de configuration contenant les paramètres d'exécution du client FTP.
+ * Stocke les informations de connexion, les préférences d'affichage et les modes de parcours.
+ */
 public class Commande {
     private String host = "";
     private String login = "";
@@ -16,11 +20,15 @@ public class Commande {
     // Niveau >16 (options style tree)
     private boolean dirsOnly = false;
 
-
+    /**
+     * Format de sortie des données.
+     */
     public enum OutputFormat {
         TEXT, JSON
     }
-
+    /**
+     * Mode de parcours de l'arborescence.
+     */
     public enum TraversalMode {
         DFS, BFS
     }
