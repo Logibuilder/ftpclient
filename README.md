@@ -1,3 +1,5 @@
+![demo](doc/ftp_client_avatar.png)
+
 # Client FTP
 Assane Kane
 24/01/2026
